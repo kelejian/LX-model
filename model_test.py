@@ -1,3 +1,4 @@
+# flake8: noqa
 import torch
 import torch.nn as nn
 import torch.onnx
@@ -6,13 +7,14 @@ from torchviz import make_dot
 import onnx
 import onnxruntime
 
-#@ profile
+
+# @profile
 def test_model(
-    model, 
-    inputs, 
-    labels, 
-    criterion=None, 
-    optimizer=None, 
+    model,
+    inputs,
+    labels,
+    criterion=None,
+    optimizer=None,
     onnx_file_path="model_test.onnx"
 ):
     """
@@ -115,8 +117,13 @@ def test_model(
     # # 使用 ONNX Runtime 推理
     # print("\n============== ONNX Runtime 推理 ==============")
     # ort_session = onnxruntime.InferenceSession(onnx_file_path)
-    # ort_inputs = {onnx_model.graph.input[i].name: inputs[i].cpu().numpy() if isinstance(inputs, (tuple, list)) else inputs.cpu().numpy()
-    #               for i in range(len(onnx_model.graph.input))}
+    # ort_inputs = {
+    #     onnx_model.graph.input[i].name: (
+    #         inputs[i].cpu().numpy() if isinstance(inputs, (tuple, list))
+    #         else inputs.cpu().numpy()
+    #     )
+    #     for i in range(len(onnx_model.graph.input))
+    # }
     # ort_outs = ort_session.run(None, ort_inputs)
     # print(f"ONNX 推理输出：{ort_outs}")
 
@@ -153,4 +160,4 @@ if __name__ == "__main__":
 
     # 测试模型
     test_model(Teachermodel, inputs=(x_acc, x_att_continuous, x_att_discrete), labels=y_HIC)
-    #test_model(Studentmodel, inputs=(x_att_continuous, x_att_discrete), labels=y_HIC)
+    # test_model(Studentmodel, inputs=(x_att_continuous, x_att_discrete), labels=y_HIC)
