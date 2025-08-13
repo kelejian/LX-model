@@ -51,34 +51,42 @@ class CustomAbsMaxScaler:
 class CollisionDataset(Dataset):
     """
     用于加载碰撞波形数据的自定义数据集。
-    【版本说明】: 此版本将波形从20001维降采样至200维，通过在1ms, 2ms...200ms时刻进行采样。
+    【版本说明】: 此版本直接读取由 utils.data_utils.py 预处理和打包后的 .npz 文件，并加载其中所有案例。
     """
-    def __init__(self, npz_path, waveform_dir, case_ids, target_scaler=None):
+    def __init__(self, params_npz_path, processed_pulses_path, target_scaler=None):
         """
-        :param npz_path: 包含所有参数的 npz 文件路径
-        :param waveform_dir: 波形数据所在目录
-        :param case_ids: 要加载的案例ID列表
-        :param target_scaler: 可选的目标缩放器，用于对波形进行缩放
+        :param params_npz_path: 包含所有工况参数的 npz 文件路径。
+        :param processed_pulses_path: 包含预处理后波形数据的 .npz 文件路径。
+        :param target_scaler: 可选的目标缩放器，用于对波形进行缩放。
         """
-        self.waveform_dir = waveform_dir
-        self.case_ids = np.array(case_ids)
         self.target_scaler = target_scaler
-        all_params = np.load(npz_path)
+
+        # 加载预处理后的波形数据，并从中获取所有 case_id
+        self.pulses_data = np.load(processed_pulses_path)
+        self.case_ids = np.array(sorted([int(k) for k in self.pulses_data.keys()]))
+        
+        # 加载并处理与 self.case_ids 对应的工况参数
+        all_params = np.load(params_npz_path)
         case_indices = self.case_ids - 1 # 将 case_ids 转换为0基索引
+
         v_min, v_max = 25, 65
         raw_velocities = all_params['impact_velocity'][case_indices]
         norm_velocities = (raw_velocities - v_min) / (v_max - v_min) # 归一化到[0, 1]
+
         a_min, a_max = -60, 60
         raw_angles = all_params['impact_angle'][case_indices]
-        norm_angles = ((raw_angles - a_min) / (a_max - a_min)) - 0.5 # 归一化到[-0.5, 0.5]
+        #norm_angles = ((raw_angles - a_min) / (a_max - a_min)) - 0.5 # 归一化到[-0.5, 0.5]
+        norm_angles = raw_angles / a_max # 归一化到[-1, 1]
+
         o_min, o_max = -1, 1
         raw_overlaps = all_params['overlap'][case_indices]
-        norm_overlaps = ((raw_overlaps - o_min) / (o_max - o_min)) - 0.5 # 归一化到[-0.5, 0.5]
+        #norm_overlaps = ((raw_overlaps - o_min) / (o_max - o_min)) - 0.5 # 归一化到[-0.5, 0.5]
+        norm_overlaps = raw_overlaps / o_max # 归一化到[-1, 1]
+
         self.features = torch.tensor(
             np.stack([norm_velocities, norm_angles, norm_overlaps], axis=1),
             dtype=torch.float32
         )
-        self.sampling_indices = np.arange(100, 20001, 100) # 采样索引数组，从20001个点中抽取200个点
 
     def __len__(self):
         """
@@ -88,31 +96,22 @@ class CollisionDataset(Dataset):
 
     def __getitem__(self, idx):
         """
-        根据索引 idx 获取一个降采样后的样本
+        根据索引 idx 获取一个样本。
         """
         input_features = self.features[idx]
         case_id = self.case_ids[idx]
-        try:
-            # 读取对应案例的波形数据
-            x_path = os.path.join(self.waveform_dir, f'x{case_id}.csv')
-            y_path = os.path.join(self.waveform_dir, f'y{case_id}.csv')
-            z_path = os.path.join(self.waveform_dir, f'z{case_id}.csv')
-            ax_full = pd.read_csv(x_path, sep='\t', header=None, usecols=[1]).values
-            ay_full = pd.read_csv(y_path, sep='\t', header=None, usecols=[1]).values
-            az_full = pd.read_csv(z_path, sep='\t', header=None, usecols=[1]).values
-            # 使用预定义的采样索引进行降采样
-            ax_sampled = ax_full[self.sampling_indices]
-            ay_sampled = ay_full[self.sampling_indices]
-            az_sampled = az_full[self.sampling_indices]
-            waveforms_np = np.stack([ax_sampled, ay_sampled, az_sampled]).squeeze() # 三个轴的波形数据, (3, 200)
-            if self.target_scaler is not None: # 如果提供了目标缩放器，则对波形进行缩放
-                original_shape = waveforms_np.shape
-                waveforms_reshaped = waveforms_np.reshape(-1, 1)
-                waveforms_scaled = self.target_scaler.transform(waveforms_reshaped)
-                waveforms_np = waveforms_scaled.reshape(original_shape)
-            target_waveforms = torch.tensor(waveforms_np, dtype=torch.float32)
-        except FileNotFoundError as e:
-            return torch.empty_like(input_features), torch.empty(3, 200, dtype=torch.float32)
+        
+        # 从已加载的数据中直接获取波形
+        waveforms_np = self.pulses_data[str(case_id)] # 形状 (3, 200)
+
+        if self.target_scaler is not None: # 如果提供了目标缩放器，则对波形进行缩放
+            original_shape = waveforms_np.shape
+            waveforms_reshaped = waveforms_np.reshape(-1, 1)
+            waveforms_scaled = self.target_scaler.transform(waveforms_reshaped)
+            waveforms_np = waveforms_scaled.reshape(original_shape)
+            
+        target_waveforms = torch.tensor(waveforms_np, dtype=torch.float32)
+
         return input_features, target_waveforms # 返回特征和波形数据
 
 #==========================================================================================
