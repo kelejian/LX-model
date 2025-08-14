@@ -1,50 +1,59 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "CrashPulse_MLP_GauNLL",
     "n_gpu": 1,
-
     "arch": {
-        "type": "MnistModel",
-        "args": {}
+        "type": "PulseMLP",
+        "args": {
+            "hidden_dims": 256,
+            "num_layers": 5,
+            "dropout": 0.2
+        }
     },
     "data_loader": {
-        "type": "MnistDataLoader",
-        "args":{
+        "type": "CollisionDataLoader",
+        "args": {
             "data_dir": "data/",
-            "batch_size": 128,
+            "batch_size": 64,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 2,
+            "normalization_mode": "absmax"
         }
     },
     "optimizer": {
-        "type": "Adam",
-        "args":{
+        "type": "AdamW",
+        "args": {
             "lr": 0.001,
-            "weight_decay": 0,
-            "amsgrad": true
+            "weight_decay": 1e-4
         }
     },
-    "loss": "nll_loss",
+    "loss": {
+        "type": "GaussianNLLLoss",
+        "args": {
+            "full": true,
+            "eps": 1e-6
+        }
+    },
     "metrics": [
-        "accuracy", "top_k_acc"
+        "root_mean_squared_error",
+        "iso_rating_x",
+        "iso_rating_y",
+        "iso_rating_z"
     ],
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
-            "step_size": 50,
+            "step_size": 100,
             "gamma": 0.1
         }
     },
     "trainer": {
-        "epochs": 100,
-
+        "epochs": 500,
         "save_dir": "saved/",
-        "save_period": 1,
+        "save_period": 10,
         "verbosity": 2,
-        
         "monitor": "min val_loss",
-        "early_stop": 10,
-
+        "early_stop": 30,
         "tensorboard": true
     }
 }
