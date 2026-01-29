@@ -160,7 +160,7 @@ python interfere_data.py
 ## 7. 项目结构
 
 ```
-LX-model-dev/
+LX_model_PulsePredict/
 ├── base/             # 抽象基类 (模型, 数据加载器, 训练器)
 ├── data_loader/      # 数据加载相关模块
 ├── logger/           # 日志和可视化模块

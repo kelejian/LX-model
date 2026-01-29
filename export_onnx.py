@@ -205,7 +205,7 @@ def verify_onnx_model(onnx_path, pytorch_model, sample_input, raw_params, scaler
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="导出PulseCNN模型为ONNX格式(多输出)")
-    parser.add_argument('-r', '--resume', type=str, default="E:\\WPS Office\\1628575652\\WPS企业云盘\\清华大学\\我的企业文档\\课题组相关\\理想项目\\LX-model-PulsePredict\\saved\\models\\PulseCNN_GauNLL\\1008_153448\\resume_1008_161400\\model_best.pth", help="已训练模型的权重文件路径")
+    parser.add_argument('-r', '--resume', type=str, default="E:\\WPS Office\\1628575652\\WPS企业云盘\\清华大学\\我的企业文档\\课题组相关\\理想项目\\LX_model_PulsePredict\\saved\\models\\HybridPulseCNN\\1213_095952\\model_best.pth", help="已训练模型的权重文件路径")
     parser.add_argument("--output_dir", type=str, default="./onnx_models", help="ONNX模型输出目录")
     parser.add_argument("--opset_version", type=int, default=17, help="ONNX opset版本")
     args = parser.parse_args()

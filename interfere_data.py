@@ -29,7 +29,7 @@ plt.rcParams['axes.unicode_minus'] = False    # 负号正常显示
 # --------------------------------------------------------------------------------------
 # 指定要加载的模型检查点 (.pth) 文件路径
 CHECKPOINT_PATH = (
-    r"E:\WPS Office\1628575652\WPS企业云盘\清华大学\我的企业文档\课题组相关\理想项目\LX-model-PulsePredict\saved\models\HybridPulseCNN\1213_095952\model_best.pth"
+    r"E:\WPS Office\1628575652\WPS企业云盘\清华大学\我的企业文档\课题组相关\理想项目\LX_model_PulsePredict\saved\models\HybridPulseCNN\1213_095952\model_best.pth"
 )
 
 # 指定要分析的数据集 (.npz) 文件路径 (例如，测试集或包含所有工况的完整数据集)
